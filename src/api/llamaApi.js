@@ -1,18 +1,13 @@
-import { API_ENDPOINTS } from './apiConfig';
+import { API_ENDPOINT } from './apiConfig';
 
 export async function sendMessage(message) {
   try {
-    const response = await fetch(API_ENDPOINTS.HUGGINGFACE_SPACE, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_ENDPOINTS.API_KEY}`
       },
-      body: JSON.stringify({ 
-        inputs: {
-          question: message
-        }
-      }),
+      body: JSON.stringify({ message }),
     });
 
     if (!response.ok) {
@@ -20,9 +15,9 @@ export async function sendMessage(message) {
     }
 
     const data = await response.json();
-    return data.outputs;
+    return data.response;
   } catch (error) {
-    console.error('Error calling Hugging Face Space API:', error);
+    console.error('Error calling chat API:', error);
     throw error;
   }
 }
