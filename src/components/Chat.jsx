@@ -2,14 +2,25 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MessageBubble from './MessageBubble';
-import { sendMessage } from '../api/llamaApi';
+import useGardio from '../hooks/useGardio';
+import ContextUpload from './ContextUpload';
 import styles from '../styles/Chat.module.css';
 
 function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState('');
+  const { fetchResponse, loading } = useGardio();
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const savedMessages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+    setMessages(savedMessages);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,24 +31,20 @@ function Chat() {
     if (!input.trim() || loading) return;
 
     const userMessage = { sender: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage, { sender: 'bot', text: 'Assistant is typing...', isTemporary: true }]);
     setInput('');
-    setLoading(true);
 
     try {
-      const response = await sendMessage(input);
-      const botMessage = { sender: 'bot', text: response };
-      setMessages(prev => [...prev, botMessage]);
+      const response = await fetchResponse(input, context);
+      setMessages(prev => [...prev.filter(msg => !msg.isTemporary), { sender: 'bot', text: response }]);
     } catch (error) {
-      const errorMessage = { sender: 'bot', text: 'An error occurred. Please try again.', isError: true };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+      setMessages(prev => [...prev.filter(msg => !msg.isTemporary), { sender: 'bot', text: 'An error occurred. Please try again.', isError: true }]);
     }
   };
 
   return (
     <Box className={styles['chat-container']}>
+      <ContextUpload onContextSet={setContext} />
       <Box className={styles.messages}>
         {messages.map((message, index) => (
           <MessageBubble key={index} message={message} />
