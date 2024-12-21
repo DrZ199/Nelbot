@@ -1,5 +1,5 @@
 export const API_ENDPOINTS = {
-  HUGGINGFACE_SPACE: 'https://huggingface.co/spaces/NelsonBot/NelBot',
-  API_KEY: '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'
+  HUGGINGFACE_SPACE: 'https://drzee1994-nelsonbot.hf.space',
+  LOCAL_API: process.env.NEXT_PUBLIC_API_URL || '/api/chat'
 };
 
